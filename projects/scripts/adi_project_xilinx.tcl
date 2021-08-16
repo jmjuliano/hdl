@@ -1,7 +1,7 @@
 
 ## Define the supported tool version
 if {![info exists REQUIRED_VIVADO_VERSION]} {
-  set REQUIRED_VIVADO_VERSION "2020.2"
+  set REQUIRED_VIVADO_VERSION "2020.1"
 }
 
 ## Define the ADI_IGNORE_VERSION_CHECK environment variable to skip version check
@@ -14,20 +14,9 @@ if {[info exists ::env(ADI_IGNORE_VERSION_CHECK)]} {
 ## Define the ADI_USE_OOC_SYNTHESIS environment variable to enable out of context
 #  synthesis
 if {[info exists ::env(ADI_USE_OOC_SYNTHESIS)]} {
-  if {[string equal $::env(ADI_USE_OOC_SYNTHESIS) n]} {
-     set ADI_USE_OOC_SYNTHESIS 0
-  } else {
-     set ADI_USE_OOC_SYNTHESIS 1
-  }
+  set ADI_USE_OOC_SYNTHESIS 1
 } elseif {![info exists ADI_USE_OOC_SYNTHESIS]} {
-   set ADI_USE_OOC_SYNTHESIS 1
-}
-
-## Set number of parallel out of context jobs through environment variable
-if {![info exists ::env(ADI_MAX_OOC_JOBS)]} {
-  set ADI_MAX_OOC_JOBS 4
-} else {
-  set ADI_MAX_OOC_JOBS $::env(ADI_MAX_OOC_JOBS)
+  set ADI_USE_OOC_SYNTHESIS 0
 }
 
 ## Set to enable incremental compilation
@@ -109,6 +98,12 @@ proc adi_project {project_name {mode 0} {parameter_list {}} } {
   if [regexp "_zcu102$" $project_name] {
     set device "xczu9eg-ffvb1156-2-e"
     set board [lindex [lsearch -all -inline [get_board_parts] *zcu102*] end]
+  }
+  
+  if [regexp "_zcu104$" $project_name] {
+	set device "xczu7ev-ffvc1156-2-e"
+	
+    set board [lindex [lsearch -all -inline [get_board_parts] *zcu104*] end]
   }
 
   adi_project_create $project_name $mode $parameter_list $device $board
@@ -280,10 +275,9 @@ proc adi_project_run {project_name} {
 
   global ADI_POWER_OPTIMIZATION
   global ADI_USE_OOC_SYNTHESIS
-  global ADI_MAX_OOC_JOBS
 
   if {$ADI_USE_OOC_SYNTHESIS == 1} {
-    launch_runs -jobs $ADI_MAX_OOC_JOBS system_*_synth_1 synth_1
+    launch_runs -jobs 4 system_*_synth_1 synth_1
   } else {
     launch_runs synth_1
   }
